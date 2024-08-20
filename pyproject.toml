@@ -1,0 +1,68 @@
+[build-system]
+requires = [
+    "setuptools>=63.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["maa"]
+
+[project]
+name = "menareants"
+version = "2.0"
+description = "Men Are Ants"
+authors = [
+    { name="Romain Bignon", email="romain@menareants.org" }
+]
+#readme = "README.rst"
+#license = { text="LGPL-3.0-or-later" }
+keywords = ["game"]
+classifiers = [
+]
+requires-python = ">=3.7"
+dependencies = [
+    "ursina",
+]
+
+[project.scripts]
+menareants = "maa.main:Main.run"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+update_changelog_on_bump = true
+version = "3.6"
+version_files = [
+    "pyproject.toml:version",
+]
+
+[tool.isort]
+lines_after_imports = 2
+include_trailing_comma = true
+use_parentheses = true
+no_inline_sort = true
+multi_line_output = 5
+known_first_party = ["maa"]
+line_length = 120
+
+[tool.mypy]
+show_error_codes = true
+
+[tool.flake8]
+max-line-length = 120
+exclude = ['dist', '*.egg-info', 'build', '.git', '__pycache__']
+extend-ignore =[
+    # Disabled because it doesn't allow exceptions, for example URLs or log
+    # messages shouldn't be split, less readable or searchable.
+    'E501',
+    # newline after binary operator
+    'W503',
+    # Too many leading '#' for block comment
+    # But it's a nice visual separator sometimes.
+    'E266',
+    # flake8-future-import: postponed annotations
+    'FI58',
+    # do not perform function calls in argument defaults: breaks fastapi qs definitions
+    'B008'
+]
