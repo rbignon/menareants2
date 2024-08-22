@@ -1,29 +1,42 @@
 import sys
 import re
 from hashlib import sha1
+from pathlib import Path
 
-from ursina import Ursina, Sky, Entity, EditorCamera, Mesh, Vec2, Vec3, color, DirectionalLight
+from ursina import Ursina, Sky, Entity, EditorCamera, Mesh, Vec2, Vec3, color, DirectionalLight, camera, application, texture_importer
 from ursina.shaders import basic_lighting_shader
 
 from .camera import Camera
 from .map import Map
 
 
+# Mokey patching to be able to find assets in several kind of directories
+potential_assets_folders = [
+    Path(__file__).parent.parent / 'assets',
+    Path(sys.prefix) / 'share' / 'menareants' / 'assets',
+    Path(sys.prefix) / 'local' / 'share' / 'menareants' / 'assets',
+]
+
+for asset_folder in potential_assets_folders:
+    if asset_folder.exists():
+        application.asset_folder = asset_folder
+
+        application.scenes_folder = asset_folder / 'scenes/'
+        application.scripts_folder = asset_folder / 'scripts/'
+        application.fonts_folder = asset_folder / 'fonts/'
+
+        application.compressed_textures_folder = asset_folder / 'textures_compressed/'
+        application.compressed_models_folder = asset_folder / 'models_compressed/'
+        application._model_path.append_path(str(application.asset_folder.resolve()))
+        texture_importer.folders.append(asset_folder)
+        break
+else:
+    print('Unable to find assets', file=sys.stderr)
+    sys.exit(1)
+
+
 class Main:
     def __init__(self):
-        self.app = Ursina()
-        sun = DirectionalLight()
-        sun.look_at(Vec3(-1,-1,-1))
-
-        self.sky = Sky()
-
-        DirectionalLight(y=2, z=3, rotation=(45, -45, 45))
-        #sun = DirectionalLight(y=-50, rotation_x=120)
-        #sun = DirectionalLight(y=-50, rotation_x=90)
-        #sun._light.get_lens().set_near_far(0,30)
-        #sun._light.show_frustum()
-
-        self.camera = Camera(rotation_smoothing=0, enabled=1, rotation=(30,30,0))
         self.map = Map()
 
     @classmethod
@@ -31,19 +44,27 @@ class Main:
         return cls().main()
 
     def main(self):
-        filename = sys.argv[1]
+        if len(sys.argv) < 2:
+            print(f'Syntax: {sys.argv[0]} MAP_FILENAME', file=sys.stderr)
+            return 1
 
-        with open(filename, 'r') as fp:
+        map_filename = sys.argv[1]
+
+        self.app = Ursina(title='Men are Ants')
+        self.camera = Camera(rotation_smoothing=0, enabled=1, rotation=(30,30,0))
+
+        sun = DirectionalLight()
+        sun.look_at(Vec3(-1,-1,-1))
+
+        self.sky = Sky()
+
+        DirectionalLight(y=2, z=3, rotation=(45, -45, 45))
+
+        with open(map_filename, 'r') as fp:
             self.map.load(fp)
 
-        #hit_plane = Entity(model='plane', collider='box', scale=100, alpha=.2, visible=False)
-        #centering_offset = Vec2(-.5, -.5)
-
-        #self.camera.position = (len(self.map[0]), -len(self.map), -20)
-        #camera.z = -60
         self.camera.position = (self.map.width/2, 0, -self.map.height/2)
         #self.camera.target_fov = 10
-        from ursina import camera
         #self.camera.set_orthographic(True)
         #camera.z = -200
         #camera.fov = 10
@@ -52,21 +73,6 @@ class Main:
         self.camera.target_z = -50
         self.camera.rotate_around_mouse_hit = False
 
-        #terrain = Entity(model=Mesh(vertices=[], triangles=[], uvs=[], colors=[]), scale=(w,1,h), y=-.01, collider='box')
-        #terrain.scale *= 5
-
-        #i = 0
-        #for z in range(h):
-        #    for x in range(w):
-        #        terrain.model.vertices.append(Vec3((x/min_dim)+(centering_offset.x), 0, (z/min_dim)+centering_offset.y))
-        #        terrain.model.uvs.append((x/w, z/h))
-
-        #        if x > 0 and z > 0:
-        #            terrain.model.triangles.append((i, i-1, i-w-1, i-w-0))
-
-        #        i += 1
-
-        #terrain.model.generate()
         print('coucou')
 
         self.app.run()
