@@ -1,10 +1,7 @@
 import sys
-import re
-from hashlib import sha1
 from pathlib import Path
 
-from ursina import Ursina, Sky, Entity, EditorCamera, Mesh, Vec2, Vec3, color, DirectionalLight, camera, application, texture_importer
-from ursina.shaders import basic_lighting_shader
+from ursina import Ursina, Sky, Vec3, DirectionalLight, camera, application, texture_importer
 
 from .camera import Camera
 from .map import Map
