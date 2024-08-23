@@ -4,10 +4,13 @@ from ursina import Entity, Vec3, color
 from ursina.shaders import basic_lighting_shader
 
 
+__all__ = ['Unit']
+
+
 class Unit(Entity):
     _types = {}
 
-    def __init__(self, parent, x, y, owner, num):
+    def __init__(self, parent, x: int, y: int, owner, num):
         super().__init__(
                 parent=parent,
                 x=x,
@@ -27,7 +30,7 @@ class Unit(Entity):
         self.color = self.prev_color
 
     @classmethod
-    def register(cls, type_id):
+    def register(cls, type_id: int):
         def register_func(type_cls):
             cls._types[type_id] = type_cls
             return type_cls
@@ -35,12 +38,17 @@ class Unit(Entity):
         return register_func
 
     @classmethod
-    def build(cls, parent, x, y, type_id, owner, num):
+    def build(cls, parent, x: int, y: int, type_id: int, owner, num):
         k = cls._types[type_id]
         return k(parent, x, y, owner, num)
 
 
 class DumbUnit(Unit):
+    """
+    Use for units when there is not already a model.
+
+    It will use a beautiful cube with a specific color.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -56,7 +64,6 @@ class Army(Unit):
         self.model = 'FinalBaseMesh'
         self.scale /= 10
         self.texture = 'brick'
-
 
 
 @Unit.register(2)
@@ -192,6 +199,3 @@ class Cavern(DumbUnit):
 @Unit.register(30)
 class Gulag(DumbUnit):
     pass
-
-
-

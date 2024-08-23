@@ -1,7 +1,10 @@
 from ursina import Entity, camera, destroy, held_keys, mouse, curve, lerp, clamp, time, Vec2, Vec3, slerp
 
-class Camera(Entity):
 
+__all__ = ['Camera']
+
+
+class Camera(Entity):
     def __init__(self, **kwargs):
         camera.editor_position = camera.position
         super().__init__(name='editor_camera', eternal=False)
@@ -32,7 +35,6 @@ class Camera(Entity):
         self.on_destroy = self.on_disable
         self.shortcuts = {'toggle_orthographic':'shift+p', 'focus':'shift+f', 'reset_center':'alt+f'}
 
-
     def on_enable(self):
         self.org_cam_par = camera.parent
         self.org_cam_pos = camera.position
@@ -42,7 +44,6 @@ class Camera(Entity):
         camera.rotation = (0,0,0)
         self.target_z = camera.z
         self.target_fov = camera.fov
-
 
     def on_disable(self):
         camera.editor_position = camera.position
@@ -109,8 +110,6 @@ class Camera(Entity):
                 self.world_position = mouse.world_point
                 camera.world_position = org_pos
 
-
-
     def update(self):
         if held_keys['gamepad right stick y'] or held_keys['gamepad right stick x']:
             self.smoothing_helper.rotation_x -= held_keys['gamepad right stick y'] * self.rotation_speed / 100
@@ -161,8 +160,7 @@ class Camera(Entity):
 
         self.world_position.y = 15
 
-        print(camera.position, camera.world_position, self.position, camera.fov)
-
+        #print(camera.position, camera.world_position, self.position, camera.fov)
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)

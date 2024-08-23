@@ -4,12 +4,16 @@ from ursina import Entity
 
 from .units import Unit
 
+
+__all__ = ['Tile', 'Map']
+
+
 class Tile(Entity):
     textures = {}
 
     _types = {}
 
-    def __init__(self, x, y, texture_id):
+    def __init__(self, x: int, y: int, texture_id: str):
         super().__init__(
                     model='plane',
                     scale=(1, 1, 1),
@@ -21,7 +25,7 @@ class Tile(Entity):
         )
 
     @classmethod
-    def register(cls, type_id):
+    def register(cls, type_id: str):
         def register_func(type_cls):
             cls._types[type_id] = type_cls
             return type_cls
@@ -29,7 +33,7 @@ class Tile(Entity):
         return register_func
 
     @classmethod
-    def build(cls, x, y, type_id, texture_id):
+    def build(cls, x, y, type_id: str, texture_id: str):
         k = cls._types[type_id]
         return k(x, y, texture_id)
 
@@ -80,7 +84,7 @@ class Montain(Tile):
 
 
 
-class Map:
+class Map(Entity):
     def __init__(self):
         self.map = []
         self.units = []
@@ -105,7 +109,7 @@ class Map:
                 self.map.append(x)
             elif line.startswith('UNIT'):
                 t, o, x, y, n = re.match(r'UNIT (\d+) ([\w\*]) (\d+),(\d+) (\d+)', line).groups()
-                self.units.append(Unit.build(None, int(x), int(y), int(t), o, n))
+                self.units.append(Unit.build(self, int(x), int(y), int(t), o, n))
 
     @property
     def width(self):
