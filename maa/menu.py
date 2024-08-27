@@ -173,7 +173,10 @@ class VerticalMenu(Widget):
         for i, e in enumerate(buttons[::-1]):
             e.parent = self
             e.scale = (
-                1 - get_margin(self.margin, LEFT) - get_margin(self.padding, LEFT) - get_margin(self.margin, RIGHT) - get_margin(self.padding, RIGHT),
+                1 - get_margin(self.margin, LEFT)
+                  - get_margin(self.padding, LEFT)
+                  - get_margin(self.margin, RIGHT)
+                  - get_margin(self.padding, RIGHT),
                 e.scale[1] / self.scale[1]
             )
             e.y = (i * e.scale[1] + self.button_spacing*i/2) - e.scale[1]/2
@@ -189,7 +192,16 @@ class VerticalMenu(Widget):
 
         self.x += get_margin(self.margin, LEFT)
 
-        self.background = Entity(parent=self, model='quad', texture='shore', scale=(1, 1, 1), color=color.white, z=1, x=0, y=0)
+        self.background = Entity(
+            parent=self,
+            model='quad',
+            texture='shore',
+            scale=(1, 1, 1),
+            color=color.white,
+            z=1,
+            x=0,
+            y=0
+        )
 
 
 
