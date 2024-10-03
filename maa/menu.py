@@ -65,6 +65,9 @@ class Widget(Entity):
 
         super().__init__(*args, **kwargs)
 
+    def on_destroy(self):
+        print('destroyed', self, self.children)
+
 
 class Form(Widget):
     def __init__(
@@ -95,92 +98,63 @@ class Form(Widget):
 
         p = self
         while p != None:
-            print(p, getattr(p, 'enabled', 'N/A'))
+            print('parent', p, getattr(p, 'enabled', 'N/A'))
             p = p.parent
 
     def close(self):
-        destroy(self)
         if self.parent_form:
             self.parent_form.enabled = True
 
         if self.on_close:
             self.on_close()
 
+        print('destroy', self)
+        destroy(self)
+
 
 class Panel(Widget):
-    pass
-
-
-class HorizontalContainer(Widget):
-    def __init__(
-        self,
-        *children,
-        align='center',
-        margin=0,
-        **kwargs,
-    ):
+    def __init__(self, child=None, **kwargs):
         super().__init__(**kwargs)
 
-    def parent_setter(self, parent):
-        super().parent_setter(parent)
+        if child:
+            child.parent = self
 
-        for n, child in enumerate(self.children):
-            child.parent = parent
-            if child.height_hint == 'relative':
-                child.height = self.height
-
-
-class VerticalContainer(Widget):
-    def __init__(
-        self,
-        *children,
-        align='top',
-        **kwargs
-    ):
-        super().__init__(**kwargs)
+        self.background = Entity(
+            parent=self,
+            model='quad',
+            texture='shore',
+            scale=(1, 1, 1),
+            color=color.white,
+            z=1,
+            x=0,
+            y=0
+        )
 
 
-    def update_positions(self):
-        for i, e in enumerate(self.children):
-            e.parent = self
-            e.y = (-i-2) * self.button_spacing
-
-
-
-class VerticalMenu(Widget):
-    button_spacing = 0.05
+class Container(Widget):
+    children_spacing = 0.05
     align = 'top'
     padding = (0.01, 0.01, 0.01, 0.01)
     margin = 0.01
 
     def __init__(
         self,
-        *buttons,
-        **kwargs
+        *children,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
-        self.scale = (
-            1 - get_margin(self.margin, LEFT) - get_margin(self.margin, RIGHT),
-            sum([button.scale.y for button in buttons]) +
-            sum([self.button_spacing for button in buttons[:-1]]) +
-            get_margin(self.margin, TOP) + get_margin(self.margin, BOTTOM)
-        )
-        buttons_height = sum([button.scale.y for button in buttons])
+        self.children = list(children)
+
+        self.scale = self.get_scale()
 
         print(self, self.position, self.scale, self.world_position, self.world_scale)
 
-        for i, e in enumerate(buttons[::-1]):
+        for i, e in enumerate(children[::-1]):
             e.parent = self
-            e.scale = (
-                1 - get_margin(self.margin, LEFT)
-                  - get_margin(self.padding, LEFT)
-                  - get_margin(self.margin, RIGHT)
-                  - get_margin(self.padding, RIGHT),
-                e.scale[1] / self.scale[1]
-            )
-            e.y = (i * e.scale[1] + self.button_spacing*i/2) - e.scale[1]/2
-            print('BUTTON', e, e.text, e.position, e.scale, e.world_position, e.world_scale)
+
+            self.set_entity_position_and_scale(i, e)
+            print('MEMBER', e, getattr(e, 'text', 'xx'), e.position, e.scale, e.world_position, e.world_scale)
 
         match get_align(self.align, VERTICAL):
             case 'top':
@@ -189,6 +163,14 @@ class VerticalMenu(Widget):
                 self.y = 0
             case 'bottom':
                 self.y = - 0.5 + (self.scale.y/2) + get_margin(self.padding, BOTTOM)
+
+        match get_align(self.align, HORIZONTAL):
+            case 'left':
+                self.x = 0.5 - (self.scale.x/2) - get_margin(self.padding, LEFT)
+            case 'center':
+                self.x = 0
+            case 'right':
+                self.x = - 0.5 + (self.scale.x/2) + get_margin(self.padding, RIGHT)
 
         self.x += get_margin(self.margin, LEFT)
 
@@ -203,6 +185,46 @@ class VerticalMenu(Widget):
             y=0
         )
 
+
+
+class VerticalContainer(Container):
+    def get_scale(self):
+        return (
+            1 - get_margin(self.margin, LEFT) - get_margin(self.margin, RIGHT),
+            sum([child.scale.y for child in self.children]) +
+            sum([self.children_spacing for child in self.children[:-1]]) +
+            get_margin(self.margin, TOP) + get_margin(self.margin, BOTTOM)
+        )
+
+    def set_entity_position_and_scale(self, i, e):
+        e.scale = (
+            1 - get_margin(self.margin, LEFT)
+              - get_margin(self.padding, LEFT)
+              - get_margin(self.margin, RIGHT)
+              - get_margin(self.padding, RIGHT),
+            e.scale[1] / self.scale[1]
+        )
+        e.y = (i * e.scale[1] + self.children_spacing*i/2) - e.scale[1]/2
+
+
+class HorizontalContainer(Container):
+    def get_scale(self):
+        return (
+            sum([child.scale.x for child in self.children]) +
+            sum([self.children_spacing for child in self.children[:-1]]) +
+            get_margin(self.margin, LEFT) + get_margin(self.margin, RIGHT),
+            1 - get_margin(self.margin, TOP) - get_margin(self.margin, BOTTOM),
+        )
+
+    def set_entity_position_and_scale(self, i, e):
+        e.scale = (
+            e.scale[0] / self.scale[0],
+            1 - get_margin(self.margin, TOP)
+              - get_margin(self.padding, TOP)
+              - get_margin(self.margin, BOTTOM)
+              - get_margin(self.padding, BOTTOM),
+        )
+        e.x = (i * e.scale[0] + self.children_spacing*i/2) - e.scale[0]/2
 
 
 class MenuButton(Button):
@@ -220,8 +242,9 @@ class EditorMapSelectionMenu(Form):
             layout=(
                 HorizontalContainer(
                     Panel(),
-                    VerticalMenu(
+                    VerticalContainer(
                         MenuButton('Back', on_click=self.close),
+                        align='right',
                     ),
                 ),
             ),
@@ -232,9 +255,12 @@ class MainMenu(Form):
     def __init__(self):
         super().__init__(
             layout=(
-                VerticalMenu(
-                    MenuButton('Editor', on_click=self.on_editor),
-                    MenuButton('Exit', on_click=self.on_exit),
+                Panel(
+                    VerticalContainer(
+                        MenuButton('Editor', on_click=self.on_editor),
+                        MenuButton('Exit', on_click=self.on_exit),
+                        align='center',
+                    ),
                 ),
             ),
         )
